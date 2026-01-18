@@ -81,7 +81,7 @@ function init() {
             })
             .catch((error) => {
                 console.error("Login Error:", error);
-                alert(`Login Failed: ${error.message}\n\nCurrent Domain: ${window.location.hostname}\n\nPlease add EXACTLY this domain to Firebase Console > Auth > Settings > Authorized Domains.`);
+                alert(`Login Failed: ${error.message}`);
             });
     };
 

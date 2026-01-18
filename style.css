@@ -1,0 +1,548 @@
+/* Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --bg-dark: #0f172a;
+    --bg-card: rgba(30, 41, 59, 0.6);
+    /* More transparency */
+    --hover-card: rgba(30, 41, 59, 0.8);
+    --primary: #3b82f6;
+    /* Blue like inspiration */
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border: rgba(148, 163, 184, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.05);
+
+    /* Icon Box Colors */
+    --box-blue: #2563eb;
+    --box-green: #10b981;
+    --box-orange: #f59e0b;
+    --box-purple: #8b5cf6;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Outfit', sans-serif;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+}
+
+/* Glass & Utilities */
+.glass {
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Layout */
+#app {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+.sidebar {
+    width: 260px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    border-right: 1px solid var(--border);
+    z-index: 10;
+}
+
+.logo {
+    font-size: 1.25rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: white;
+}
+
+.sidebar-logo-img {
+    width: 100%;
+    max-width: 180px;
+    height: auto;
+    border-radius: 8px;
+    display: block;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    overflow-y: auto;
+}
+
+.nav-item {
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    cursor: pointer;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.nav-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+.nav-item.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    padding: 2rem 3rem;
+    /* More horizontal padding */
+    overflow-y: auto;
+    background: radial-gradient(circle at top right, rgba(37, 99, 235, 0.1), transparent 40%),
+        radial-gradient(circle at bottom left, rgba(139, 92, 246, 0.05), transparent 40%);
+}
+
+header {
+    margin-bottom: 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+/* Grid Layouts */
+.stats-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.grid-split-2 {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    /* 2/3 Chart, 1/3 List */
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Stat Cards */
+.stat-card {
+    padding: 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    background: var(--hover-card);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.box-blue {
+    background: var(--box-blue);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.box-green {
+    background: var(--box-green);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.box-orange {
+    background: var(--box-orange);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.box-purple {
+    background: var(--box-purple);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0.25rem 0;
+}
+
+.stat-sub {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Panels */
+.card-panel {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-panel h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 1rem;
+}
+
+/* Top Devices List */
+.top-devices-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow-y: auto;
+    max-height: 250px;
+}
+
+.device-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+}
+
+.device-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.device-name {
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.device-qty {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.device-rev {
+    font-weight: 600;
+    color: var(--box-green);
+}
+
+/* Upload & Tables */
+.upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 16px;
+    padding: 3rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-muted);
+}
+
+.upload-zone:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.table-container {
+    overflow: hidden;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+}
+
+th {
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* Buttons */
+.btn {
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+.btn-danger {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.btn-danger:hover {
+    background: rgba(239, 68, 68, 0.25);
+}
+
+/* Anim */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade {
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+.empty-state {
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+    padding: 2rem;
+}
+
+.glass-select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    color: var(--text-muted);
+    border-radius: 6px;
+    font-size: 0.75rem;
+    padding: 2px 4px;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.glass-select:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+}
+
+.glass-select option {
+    background: var(--bg-dark);
+    color: var(--text-main);
+}
+
+.search-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    color: var(--text-muted);
+    transition: all 0.2s;
+}
+
+.search-wrapper:focus-within {
+    border-color: var(--primary);
+    background: rgba(59, 130, 246, 0.05);
+    color: var(--primary);
+}
+
+.search-wrapper input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    width: 200px;
+}
+
+.search-wrapper input::placeholder {
+    color: rgba(148, 163, 184, 0.5);
+}
+
+/* --- Mobile Optimization (< 768px) --- */
+@media (max-width: 768px) {
+
+    /* Layout Reset */
+    body {
+        flex-direction: column;
+    }
+
+    #app {
+        flex-direction: column;
+    }
+
+    /* Transform Sidebar to Bottom Nav */
+    .sidebar {
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-top: 1px solid var(--border);
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(20px);
+        padding: 0.75rem;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 1000;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Hide Logo text on mobile nav to save space, keeping only icon if needed, or hide entire logo section */
+    .sidebar .logo {
+        display: none;
+    }
+
+    .nav-links {
+        flex-direction: row;
+        width: 100%;
+        justify-content: space-around;
+        gap: 0;
+        overflow-y: visible;
+    }
+
+    .nav-item {
+        flex-direction: column;
+        gap: 4px;
+        padding: 0.5rem;
+        font-size: 0.7rem;
+        text-align: center;
+        border-radius: 8px;
+    }
+
+    .nav-item i {
+        font-size: 1.4rem;
+        margin-bottom: 2px;
+    }
+
+    .nav-item span {
+        display: block;
+        /* Ensure text stacks under icon */
+    }
+
+    /* Main Content Adjustments */
+    .main-content {
+        padding: 1.5rem 1rem;
+        padding-bottom: 100px;
+        /* Space for bottom nav */
+        width: 100%;
+    }
+
+    header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+        margin-bottom: 2rem;
+    }
+
+    /* Stack Grids */
+    .stats-grid-4 {
+        grid-template-columns: 1fr;
+        /* Stack vertically */
+        gap: 1rem;
+    }
+
+    .grid-split-2 {
+        grid-template-columns: 1fr;
+        /* Stack vertically */
+        gap: 1rem;
+    }
+
+    /* Search Bar */
+    .search-wrapper {
+        width: 100%;
+    }
+
+    .search-wrapper input {
+        width: 100%;
+    }
+
+    /* Typography & Touch Targets */
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    .btn {
+        width: 100%;
+        /* Full width buttons for easier tapping */
+        justify-content: center;
+        padding: 0.8rem;
+    }
+
+    /* Tables */
+    .table-container {
+        overflow-x: auto;
+        /* Horizontal scroll for tables */
+        -webkit-overflow-scrolling: touch;
+    }
+
+    th,
+    td {
+        white-space: nowrap;
+        /* Prevent wrapping causing jagged rows */
+    }
+}

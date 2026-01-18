@@ -1,6 +1,7 @@
 // Import Firebase (ES Modules via CDN)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, doc, onSnapshot, setDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // --- Configuration ---
 const firebaseConfig = {
@@ -15,6 +16,8 @@ const firebaseConfig = {
 // --- Initialization ---
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
 
 // Data State
 const months = [
@@ -22,12 +25,13 @@ const months = [
     'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-let appData = {}; // Gets filled by Firebase
+let appData = {};
 let currentView = 'dashboard';
 let revenueChart = null;
-let unsubscribe = null; // Listener for real-time updates
+let unsubscribe = null;
+let currentUser = null;
 
-// Initialize Empty Structure (default before load)
+// Initialize Empty Structure
 months.forEach(month => {
     appData[month] = { invoices: [], totalDevices: 0, totalPaid: 0 };
 });
@@ -39,14 +43,46 @@ const pageSubtitle = document.getElementById('pageSubtitle');
 const dashboardView = document.getElementById('dashboardView');
 const monthView = document.getElementById('monthView');
 const dashUploadBtn = document.getElementById('dashUploadBtn');
+const loginView = document.getElementById('loginView');
+const appContainer = document.getElementById('app');
+
+// --- Auth Monitoring ---
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        // Logged In
+        console.log("✅ User logged in:", user.email);
+        currentUser = user;
+        loginView.classList.add('hidden');
+        appContainer.classList.remove('hidden'); // Ensure app is visible
+
+        // Start Data Sync
+        setupRealtimeListener();
+    } else {
+        // Logged Out
+        console.log("🔒 User logged out");
+        currentUser = null;
+        loginView.classList.remove('hidden');
+        // Optional: Hide app content behind login, though overlay covers it
+        if (unsubscribe) unsubscribe(); // Stop listening
+    }
+});
 
 // --- Main Init ---
 function init() {
-    renderNav(); // Initial dummy render
+    renderNav();
     loadView('dashboard');
-    setupRealtimeListener(); // Connect to Cloud
 
-    // Event Listeners
+    // Auth Listeners
+    document.getElementById('loginBtn')?.addEventListener('click', () => {
+        signInWithPopup(auth, provider)
+            .catch((error) => alert("Login failed: " + error.message));
+    });
+
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+        if (confirm("Sign out?")) signOut(auth);
+    });
+
+    // App Listeners
     if (dashUploadBtn) {
         dashUploadBtn.addEventListener('click', () => {
             const currentMonth = new Date().toLocaleString('default', { month: 'long' });
@@ -61,7 +97,7 @@ function init() {
         });
     }
 
-    // File Upload Listeners
+    // File Upload
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
     if (dropZone) {
@@ -79,13 +115,13 @@ function init() {
         });
     }
 
-    // Clear Month Listener
+    // Clear Month
     const clearBtn = document.getElementById('clearMonthBtn');
     if (clearBtn) {
         clearBtn.addEventListener('click', () => {
             if (confirm(`Are you sure you want to clear all data for ${currentView}?`)) {
                 appData[currentView] = { invoices: [], totalDevices: 0, totalPaid: 0 };
-                saveData(); // Sends to Cloud
+                saveData();
             }
         });
     }
@@ -95,61 +131,42 @@ function init() {
 
 // --- Firebase Logic ---
 function setupRealtimeListener() {
-    // We listen to one document: 'data/inventory'
     const docRef = doc(db, "data", "inventory");
 
     unsubscribe = onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
-            // Cloud has data! Update our local variable.
             const cloudData = docSnap.data();
-
-            // Merge carefully or just overwrite? Overwrite is safer for full sync.
-            // But we must ensure structure exists.
             months.forEach(m => {
-                if (cloudData[m]) {
-                    appData[m] = cloudData[m];
-                } else {
-                    appData[m] = { invoices: [], totalDevices: 0, totalPaid: 0 };
-                }
+                if (cloudData[m]) appData[m] = cloudData[m];
+                else appData[m] = { invoices: [], totalDevices: 0, totalPaid: 0 };
             });
-
-            console.log("🔥 Cloud update received!");
-            refreshUI(); // Update screen
+            refreshUI();
         } else {
-            // First time ever? Create the empty doc.
             console.log("☁️ Creating new database...");
             saveData();
         }
     }, (error) => {
-        console.error("Firebase Sync Error:", error);
-        // Fallback or alert user
+        console.error("Sync Error:", error);
     });
 }
 
 function saveData() {
-    // Send 'appData' to the Cloud Document
+    if (!currentUser) return; // Guard clause
     const docRef = doc(db, "data", "inventory");
-    setDoc(docRef, appData)
-        .then(() => console.log("💾 Saved to Cloud"))
-        .catch((e) => console.error("Save failed:", e));
+    setDoc(docRef, appData).catch((e) => console.error("Save failed:", e));
 }
 
 function refreshUI() {
     renderNav();
-    if (currentView === 'dashboard') {
-        renderDashboard();
-    } else if (currentView !== 'search') {
-        renderMonthDetail(currentView);
-    }
+    if (currentView === 'dashboard') renderDashboard();
+    else if (currentView !== 'search') renderMonthDetail(currentView);
 }
 
 // --- Navigation ---
-// EXPORT GLOBALLY for HTML onclicks
 window.loadView = function (view) {
     currentView = view;
     renderNav();
 
-    // Reset visibility
     if (dashboardView) dashboardView.classList.add('hidden');
     if (document.getElementById('monthView')) document.getElementById('monthView').classList.add('hidden');
     if (document.getElementById('searchView')) document.getElementById('searchView').classList.add('hidden');
@@ -196,23 +213,18 @@ function renderDashboard() {
     const filterEl = document.getElementById('dashboardTimeFilter');
     const filterValue = filterEl ? filterEl.value : 'year';
 
-    // Bind change event if not already
-    if (filterEl && !filterEl.onchange) {
-        filterEl.onchange = () => renderDashboard();
-    }
+    if (filterEl && !filterEl.onchange) filterEl.onchange = () => renderDashboard();
 
     let totalDevices = 0;
     let totalRevenue = 0;
     let totalInvoices = 0;
     let itemsForLeaderboard = [];
 
-    // Select Months to Aggregate
     let targetMonths = (filterValue === 'year') ? months : [filterValue];
     if (document.getElementById('dashDevicesSub')) {
         document.getElementById('dashDevicesSub').innerText = (filterValue === 'year') ? 'All-time' : filterValue;
     }
 
-    // Aggregate Data
     targetMonths.forEach(m => {
         const d = appData[m];
         if (d) {
@@ -227,7 +239,6 @@ function renderDashboard() {
 
     const avgPrice = totalDevices > 0 ? (totalRevenue / totalDevices) : 0;
 
-    // Update Cards
     animateValue('dashTotalDevices', totalDevices);
     document.getElementById('dashTotalRevenue').innerText = formatCurrency(totalRevenue);
     document.getElementById('dashAvgPrice').innerText = formatCurrency(avgPrice);
@@ -237,14 +248,10 @@ function renderDashboard() {
     renderTopDevices(itemsForLeaderboard);
 }
 
-// --- Chart.js ---
 function renderChart() {
     const ctx = document.getElementById('revenueChart');
     if (!ctx) return;
-
     const dataPoints = months.map(m => (appData[m] ? appData[m].totalPaid : 0));
-
-    // Destroy old if exists
     if (revenueChart) { revenueChart.destroy(); }
 
     const canvas = ctx.getContext('2d');
@@ -252,7 +259,6 @@ function renderChart() {
     gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)');
     gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
 
-    // Check if Chart is loaded
     if (typeof Chart !== 'undefined') {
         revenueChart = new Chart(ctx, {
             type: 'line',
@@ -315,7 +321,6 @@ function renderTopDevices(items) {
     });
 }
 
-// --- Month View ---
 function renderMonthDetail(month) {
     const data = appData[month];
     if (!data) return;
@@ -342,7 +347,6 @@ function renderMonthDetail(month) {
                     <td>${formatCurrency(inv.totalAmount)}</td>
                 </tr>
             `;
-
             if (inv.items) {
                 inv.items.forEach(item => {
                     itemsTbody.innerHTML += `
@@ -359,10 +363,8 @@ function renderMonthDetail(month) {
     }
 }
 
-// --- File Handling (CSV) ---
 window.handleFile = function (file) {
     if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) { alert('Please upload a CSV file.'); return; }
-    // PapaParse must be on window
     if (typeof Papa !== 'undefined') {
         Papa.parse(file, {
             header: true, dynamicTyping: true, skipEmptyLines: true,
@@ -389,7 +391,6 @@ function processInvoiceData(rows, fileName) {
     validRows.forEach(row => {
         const keys = Object.keys(row);
         const lowerKeys = keys.map(k => k.toLowerCase());
-
         let qty = 1;
         const qtyKeyIndex = lowerKeys.findIndex(k => k.includes('qty') || k.includes('quantity'));
         if (qtyKeyIndex !== -1) {
@@ -397,25 +398,19 @@ function processInvoiceData(rows, fileName) {
             const parsed = parseCleanNumber(raw);
             if (!isNaN(parseFloat(raw))) qty = parsed;
         }
-
         const modelKeyIndex = lowerKeys.findIndex(k => k.includes('model') || k.includes('item') || k.includes('device') || k.includes('desc'));
         let model = modelKeyIndex !== -1 ? row[keys[modelKeyIndex]] : 'Unknown Device';
         if (!model || (typeof model === 'string' && (model.trim() === '' || model.toLowerCase() === 'total'))) model = 'Unknown Device';
-
         const imeiIndex = lowerKeys.findIndex(k => k.includes('imei') || k.includes('serial'));
         const imei = imeiIndex !== -1 ? String(row[keys[imeiIndex]]) : '';
-
-        const itemDate = fileDate || null; // Simplified since we removed row date logic per user request before
-
+        const itemDate = fileDate || null;
         let lineTotal = 0;
         const totalIdx = lowerKeys.findIndex(k => k.includes('total') || k.includes('amount'));
-        if (totalIdx !== -1) {
-            lineTotal = parseCleanNumber(row[keys[totalIdx]]);
-        } else {
+        if (totalIdx !== -1) lineTotal = parseCleanNumber(row[keys[totalIdx]]);
+        else {
             const priceIdx = lowerKeys.findIndex(k => k.includes('price'));
             if (priceIdx !== -1) lineTotal = parseCleanNumber(row[keys[priceIdx]]) * qty;
         }
-
         invoiceDeviceCount += qty;
         invoiceTotal += lineTotal;
         invoiceItems.push({ model: model, quantity: qty, price: lineTotal, imei: imei, date: itemDate });
@@ -432,11 +427,9 @@ function processInvoiceData(rows, fileName) {
     appData[currentView].invoices.push(invoiceRecord);
     appData[currentView].totalDevices += invoiceDeviceCount;
     appData[currentView].totalPaid += invoiceTotal;
-
-    saveData(); // This pushes to Firebase!
+    saveData();
 }
 
-// --- Search ---
 window.performSearch = function (query) {
     if (!query || query.trim() === '') return;
     loadView('search');
@@ -444,10 +437,8 @@ window.performSearch = function (query) {
     const resultsBody = document.getElementById('searchResultsBody');
     const stats = document.getElementById('searchStats');
     resultsBody.innerHTML = '';
-
     const q = query.toLowerCase().trim();
     let count = 0;
-
     months.forEach(month => {
         const data = appData[month];
         if (data.invoices) {
@@ -482,7 +473,6 @@ window.performSearch = function (query) {
     }
 }
 
-// Helpers
 function parseCleanNumber(val) {
     if (typeof val === 'number') return val;
     if (typeof val === 'string') {
@@ -492,7 +482,6 @@ function parseCleanNumber(val) {
     }
     return 0;
 }
-
 function extractDateFromFilename(filename) {
     const match = filename.match(/(\d{4}[-.]\d{2}[-.]\d{2})|(\d{1,2}[-.]\d{1,2}[-.]\d{2,4})/);
     if (match) {
@@ -501,16 +490,11 @@ function extractDateFromFilename(filename) {
     }
     return null;
 }
-
 function formatCurrency(num) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num); }
 function updateDateDisplay() {
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString('en-US', options);
 }
-function animateValue(id, end) {
-    const obj = document.getElementById(id);
-    if (obj) obj.innerHTML = end;
-}
+function animateValue(id, end) { const obj = document.getElementById(id); if (obj) obj.innerHTML = end; }
 
-// --- Start ---
 init();

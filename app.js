@@ -385,11 +385,12 @@ function renderMonthDetail(month) {
                 </tr>
             `;
             if (inv.items) {
+                const uploadDate = new Date(inv.uploadDate).toLocaleDateString();
                 inv.items.forEach(item => {
                     itemsTbody.innerHTML += `
                         <tr>
                             <td>${item.model}</td>
-                            <td style="color: var(--text-muted); font-size: 0.9rem;">${item.date || '-'}</td>
+                            <td style="color: var(--text-muted); font-size: 0.9rem;">${uploadDate}</td>
                             <td style="font-family: monospace; font-size: 0.85rem; color: var(--text-muted);">${item.imei || '-'}</td>
                             <td>${item.quantity}</td>
                             <td>${formatCurrency(item.price)}</td>
